@@ -1,6 +1,6 @@
-from services.barcode_service import detect_barcode
-from services.voice_service import speak
 import time
+from services.voice_service import speak
+from services.voice_command_service import get_command
 
 prompts = [
     "Rotate the object slowly",
@@ -9,24 +9,52 @@ prompts = [
     "Tilt the object downward"
 ]
 
-last_prompt = 0
 prompt_index = 0
 
 
-def run(frame):
+def wait_for_confirmation():
+    while True:
+        time.sleep(5)
 
-    global last_prompt, prompt_index
+        speak("Have you done it? Say yes or no.")
 
-    barcodes = detect_barcode(frame)
+        # ✅ Give user 3 seconds to respond
+        response = None
+        start_time = time.time()
 
-    if barcodes:
-        return "ALIGNMENT", barcodes[0]
+        while time.time() - start_time < 3:
+            cmd = get_command()
 
-    current_time = time.time()
+            if cmd:
+                response = cmd
+                break
 
-    if current_time - last_prompt > 5:
-        speak(prompts[prompt_index])
-        prompt_index = (prompt_index + 1) % len(prompts)
-        last_prompt = current_time
+            time.sleep(0.2)  # small delay to avoid CPU overuse
 
-    return "ROTATION", None
+        # ✅ PROCESS RESPONSE
+        if response == "yes":
+            speak("Good. Moving on.")
+            return True
+
+        elif response == "no":
+            speak("Okay, take your time.")
+            continue  # ask again after 5 sec
+
+        else:
+            speak("I didn't catch that.")
+
+
+def run():
+    global prompt_index
+
+    # Speak current instruction
+    instruction = prompts[prompt_index]
+    speak(instruction)
+
+    # Wait for user confirmation loop
+    wait_for_confirmation()
+
+    # Move to next instruction
+    prompt_index = (prompt_index + 1) % len(prompts)
+
+    return "ROTATION"

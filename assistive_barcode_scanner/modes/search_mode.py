@@ -6,6 +6,8 @@ from services.guidance_service import find_barcode_region, get_guidance
 from services.beep_service import update_beep
 from services.voice_command_service import get_command
 
+SEARCH_TIMEOUT = 5
+start_time = time.time()
 frame_count = 0
 last_guidance_time = 0
 last_no_product_time = 0
@@ -88,8 +90,12 @@ def run(frame):
 
     else:
         update_beep(0.0)
+    
+        if current_time - start_time > SEARCH_TIMEOUT:
+            return "ROTATION", None
+    
         if current_time - last_no_product_time > NO_PRODUCT_INTERVAL:
-            speak("Move camera slowly across the product surface")
+            speak("Move camera slowly around the product")
             last_no_product_time = current_time
 
     return "SEARCH", None

@@ -1,6 +1,11 @@
-from services.scan_service import process_barcode
+from services.voice_service import speak
+
 
 def run(barcode):
-    if barcode:
-        process_barcode(barcode)
-    return "SEARCH", None
+    speak("Barcode detected. Hold still.")
+    
+    # TODO: fetch product info here
+    result = f"Product code is {barcode}"
+    speak(result)
+
+    return result
